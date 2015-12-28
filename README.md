@@ -14,3 +14,5 @@ To fix this, follow the instructions in `leapd.service` to install a systemd uni
 ```shell
 sudo service leapd restart
 ```
+
+Put the LeapSDK directory somewhere and set your `$LEAPSDK` env var to point to it.
