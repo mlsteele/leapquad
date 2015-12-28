@@ -18,3 +18,12 @@ sudo service leapd restart
 Put the LeapSDK directory somewhere and set your `$LEAPSDK` env var to point to it.
 
 Set your `$CRAZYPY` env var to point to crazyflie-clients-python.
+
+## Running
+
+So... Leap is only python 2 compatible, and CrazyFlie is only python 3 compatible. So that's fun.
+The two halves of this program communicate over a unix domain socket.
+
+`leap.py` sends control info to `quad.py` which controls the drone.
+
+Leap -> `leap.py` -> `quad.py` -> Quad
