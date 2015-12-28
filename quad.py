@@ -14,13 +14,15 @@ sys.path.insert(0, os.path.abspath(os.path.join(cfclients_dir, "lib/")))
 import logging
 import cflib
 from cflib.crazyflie import Crazyflie
+from sockrecv import SocketReader
 
 logging.basicConfig(level=logging.ERROR)
 
 
 class QuadController(object):
     """Connects to a Crazyflie and controls from the leap."""
-    def __init__(self, link_uri):
+    def __init__(self, link_uri, socket_reader):
+        self.socket_reader = socket_reader
         self._cf = Crazyflie()
         self._cf.connected.add_callback(self._connected)
         self._cf.disconnected.add_callback(self._disconnected)
@@ -35,8 +37,8 @@ class QuadController(object):
         try:
             self._run()
         except Exception as ex:
+            print(ex)
             print("Run method raised an exception. Shutting down.")
-            traceback.print_exc()
         finally:
             # Make sure that the last packet leaves before the link is closed
             # since the message queue is not flushed before closing
@@ -63,12 +65,15 @@ class QuadController(object):
         self._cf.commander.send_setpoint(0, 0, 0, 0)
 
         while True:
-            rroll, rpitch, ryaw, rthrust = self.remote.get_vector()
-            roll = int(rroll * 10)
-            pitch = int(rpitch * 10)
-            yaw = int(ryaw * 10)
-            thrust = int(map_linear(rthrust, 0, 1.0, 0, 65000))
-            self._cf.commander.send_setpoint(roll, pitch, yaw, thrust)
+            rroll, rpitch, ryaw, rthrust = self.socket_reader.read(default=(0,0,0,0))
+            roll = int(rroll * 60)
+            pitch = int(rpitch * 60)
+            yaw = int(ryaw * 120)
+            thrust = int(map_linear(rthrust, 0, 1.0, 0, 40000))
+            thrust = bound(thrust, 0, 0xffff)
+            vector = (roll, pitch, yaw, thrust)
+            print("\t".join(map("{:.2f}".format, vector)))
+            self._cf.commander.send_setpoint(*vector)
 
     def _tween(self, start, end, x):
         """A value goes from start to end and x is in [0,1]"""
@@ -79,6 +84,10 @@ class QuadController(object):
 def map_linear(x, in_min, in_max, out_min, out_max):
     """Transform a value from one space to another."""
     return (x - in_min) * (out_max - out_min) / float(in_max - in_min) + out_min;
+
+
+def bound(x, out_min, out_max):
+    return max(out_min, min(x, out_max))
 
 
 def interact():
@@ -112,5 +121,6 @@ if __name__ == "__main__":
 
     # scan_for_crazyflies()
 
+    socket_reader = SocketReader("./comm.sock")
     radio = "radio://0/80/250K"
-    qc = QuadController(radio)
+    qc = QuadController(radio, socket_reader)

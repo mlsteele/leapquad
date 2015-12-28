@@ -13,7 +13,10 @@ arch_dir = "lib/x64" if sys.maxsize > 2**32 else "lib/x86"
 sys.path.insert(0, os.path.abspath(os.path.join(sdk_dir, "lib/")))
 sys.path.insert(0, os.path.abspath(os.path.join(sdk_dir, arch_dir)))
 
-import Leap, sys, thread, time
+import Leap
+import time
+import socket
+from socksend import SocketWriter
 
 
 class LeapRemote(object):
@@ -60,11 +63,11 @@ class LeapRemote(object):
 
         self.t_last_observe = time.time()
         direction = hand.direction
-        self.roll = hand.palm_normal.roll
-        self.pitch = direction.pitch
+        self.roll = -hand.palm_normal.roll
+        self.pitch = -direction.pitch
         self.yaw = direction.yaw
         self.thrust = max(0, map_linear(hand.palm_position.y,
-                                        300, 470, 0, 1.0))
+                                        210, 600, 0, 1.0))
         return (self.roll, self.pitch, self.yaw, self.thrust)
 
 
@@ -85,7 +88,13 @@ def interact():
 
 if __name__ == "__main__":
     remote = LeapRemote()
+    try:
+        socket_writer = SocketWriter("./comm.sock")
+    except socket.error:
+        print "Start quad.py first."
+        sys.exit(-1)
     while True:
         time.sleep(0.01)
         vector = remote.get_vector()
         print "\t".join(map("{:.2f}".format, vector))
+        socket_writer.send(vector)
