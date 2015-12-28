@@ -16,3 +16,5 @@ sudo service leapd restart
 ```
 
 Put the LeapSDK directory somewhere and set your `$LEAPSDK` env var to point to it.
+
+Set your `$CRAZYPY` env var to point to crazyflie-clients-python.
