@@ -2,6 +2,8 @@
 
 Control a quadcopter with a leap.
 
+It works but it's difficult.
+
 Hardware:
 - [Leap Motion](https://www.leapmotion.com/) Dev Board V.05
 - [Crazyflie 2.0](https://www.bitcraze.io/crazyflie-2/)
