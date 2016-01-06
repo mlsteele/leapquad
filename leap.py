@@ -52,6 +52,9 @@ class LeapRemote(object):
             Thrust is a float in [0, inf)
                 1.0 is pretty fast.
         """
+        # MODE = "direct"
+        MODE = "strafe"
+
         frame = self.controller.frame()
         hand = frame.hands.rightmost
 
@@ -63,11 +66,21 @@ class LeapRemote(object):
 
         self.t_last_observe = time.time()
         direction = hand.direction
-        self.roll = -hand.palm_normal.roll
-        self.pitch = -direction.pitch
-        self.yaw = direction.yaw
-        self.thrust = max(0, map_linear(hand.palm_position.y,
-                                        210, 600, 0, 1.0))
+        if MODE == "direct":
+            self.roll = -hand.palm_normal.roll
+            self.pitch = -direction.pitch
+            self.yaw = direction.yaw
+            self.thrust = max(0, map_linear(hand.palm_position.y,
+                                            100, 400, 0, 1.0))
+        elif MODE == "strafe":
+            self.roll = hand.palm_position.x / 160.
+            self.pitch = -hand.palm_position.z / 160.
+            self.yaw = direction.yaw / 3.
+            self.thrust = max(0, map_linear(hand.palm_position.y,
+                                            210, 600, 0, 1.0))
+        else:
+            raise ValueError("unrecognized mode")
+
         return (self.roll, self.pitch, self.yaw, self.thrust)
 
 
